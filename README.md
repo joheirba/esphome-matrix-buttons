@@ -1,0 +1,90 @@
+# ESPHome Matrix-buttons custom component
+
+**Custom ESPHome component for binary buttons arranged in a matrix configuration using multiplexers. Derived from matrix_keypad. Can be used for push-buttons or toggle-buttons if every button is protected with diode (see example circuit).**
+
+To install, download and copy the matrix_buttons directory into your esphome project directory.
+
+## Component/Hub
+
+```yaml
+# Example configuration entry for an 8x8 matrix with two pcf8574 expanders (exp_one and exp_two) communicating over an i2c bus (i2c_exp).
+# Example circuit:
+#   pcf-row  -> optoled -> 220R -> gnd
+#   12V      -> opto-transistor -> ( 4k7 -> gnd ) -----> push-button (momentary or latching)
+#   GND      <- optoled <- 1kR <-----------------------------|
+#   pcf-col  <- opto-transistor <- gnd
+
+i2c:
+  - id: i2c_exp
+    sda: GPIO09
+    scl: GPIO10
+    frequency: 400kHz
+
+pcf8574:
+  - id: exp_one
+    i2c_id: i2c_exp
+    address: 0x20
+  - id: exp_two
+    i2c_id: i2c_exp
+    address: 0x21
+
+matrix_buttons:
+  id: my_matrix_buttons
+  active_high: false     # Rows and columns are active low
+  passive_rows: false    # Set to true if outputs aren't protected: non-protected outputs will be switched to input mode when not active to prevent damage from back-feeding current through the diodes
+  multi_keys: 1000000000 # Set to the number of simultaneous key presses to allow (if hardware supports it), otherwise only one key press will be allowed at a time
+  scan_delay: 60         # Delay in µs for rows to stabilize before reading columns, can be adjusted based on the hardware (opto-couplers, diodes, etc.) used in the matrix
+  rows:
+    - pin: { pcf8574: exp_one, number: 0, mode: OUTPUT }   # outputs are pulled down on activation
+    - pin: { pcf8574: exp_one, number: 1, mode: OUTPUT }
+    - pin: { pcf8574: exp_one, number: 2, mode: OUTPUT }
+    - pin: { pcf8574: exp_one, number: 3, mode: OUTPUT }
+    - pin: { pcf8574: exp_one, number: 4, mode: OUTPUT }
+    - pin: { pcf8574: exp_one, number: 5, mode: OUTPUT }
+    - pin: { pcf8574: exp_one, number: 6, mode: OUTPUT }
+    - pin: { pcf8574: exp_one, number: 7, mode: OUTPUT }
+  columns:
+    - pin: { pcf8574: exp_two, number: 0, mode: INPUT } # columns are pulled down on activation
+    - pin: { pcf8574: exp_two, number: 1, mode: INPUT }
+    - pin: { pcf8574: exp_two, number: 2, mode: INPUT }
+    - pin: { pcf8574: exp_two, number: 3, mode: INPUT }
+    - pin: { pcf8574: exp_two, number: 4, mode: INPUT }
+    - pin: { pcf8574: exp_two, number: 5, mode: INPUT }
+    - pin: { pcf8574: exp_two, number: 6, mode: INPUT }
+    - pin: { pcf8574: exp_two, number: 7, mode: INPUT }
+  debounce_time: 20
+  on_state:
+     - lambda: |-  
+         ESP_LOGD("my_matrix_buttons:on_state", "state %d pos %d row %d col %d rowcnt %d colcnt %d (key %d [%c])", 
+                  (int) state, pos, row, col, rowcnt, colcnt, (int) key, (char)(key==0 ? '@' : key));
+  script_id: process_matrix_button_state
+
+script:
+  - id: process_matrix_button_state
+    mode: single
+    parameters:
+      state: bool
+      pos: int
+    then:
+      - lambda: |-
+        ....
+```
+
+### Configuration variables
+
+  - id (Optional, ID): Set the ID of this device for use in lambdas.
+  - rows (Required, list): A list of pins where the horizontal matrix lines are connected, in order from top to bottom. These pins need to be output capable.
+  - columns (Required, list): A list of pins where the vertical matrix lines are connected, in order from left to right. These pins need to be input capable with pullups enabled. If there is no internal pullup, then an external one is required.
+  - keys (Optional, string): The keys present on the matrix, from top left to bottom right, row by row. Required for key_collector and binary_sensor (if using key selection).
+  - debounce_time (Optional, int): Debounce time for button activations in milliseconds. Defaults to 1.
+  - scan_delay (Optional, int): Time in microseconds to wait for a row activation to propagate before checking column activations. Defaults to 0, maximum value of 500. 
+  - passive_rows (Optional, boolean): Set to true if inactive rows should be switched to passive inputs. This is mandatory when the rows are not protected with diodes, optocouplers or anything else, against short-circuiting with adjacant rows, which happens when multiple buttons are active at once. When set to false, inactive rows are switched to low/high, depending on the value of active_high, which is faster than switching them to inputs. Defaults to true.
+  - active_high (Optional, boolean): Set to true if rows and columns are active high. Can still be inversed with the pin properties if needed. Defaults to false.
+  - multi_keys (Optional, int): Set to the number of simultaneous key presses to allow (if hardware supports it), otherwise only one key press will be allowed at a time. Defaults to 1.
+  - script_id (Optional, ID): ID of a script that will be called on every state change of a button.
+
+### Example circuit
+
+Following example circuit has been used with the example yaml above. The diode in series with every button allows the matrix to detect multiple button activations, which in turn allows the use of both toggle and momentary switches.
+
+<img src="example/esp32-pcf8574 circuit-v2c.jpg" alt="Example Circuit">
