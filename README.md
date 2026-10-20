@@ -85,6 +85,6 @@ script:
 
 ### Example circuit
 
-Following example circuit has been used with the example yaml above. The diode in series with every button allows the matrix to detect multiple button activations, which in turn allows the use of both toggle and momentary switches.
+Following example circuit has been used with the yaml above. The diode in series with every button allows the matrix to detect multiple button activations, which in turn allows the use of both toggle and momentary switches. The row pins are protected by optocouplers, allowing the "passive_rows" property to be safely set to false. As a PC817 optocoupler may induce a delay up to 18µs, a scan delay of 60µs is needed after activation of a row for the signal to propagate throug the i2c bus, the optocouplers and the rather long transmission lines of up to 100m to the push-buttons or switches (typical signal propagation in a copper conductor is around 5ns/m).
 
 <img src="example/esp32-pcf8574 circuit-v2c.jpg" alt="Example Circuit">
