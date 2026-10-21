@@ -96,3 +96,15 @@ script:
 Following example circuit has been used with the yaml above. The diode in series with every button allows the matrix to detect multiple button activations, which in turn allows the use of both toggle and momentary switches. The row pins are protected by optocouplers, allowing the "passive_rows" property to be safely set to false. As a PC817 optocoupler may induce a delay up to 18µs, a scan delay of 60µs is needed after activation of a row for the signal to propagate throug the i2c bus, the optocouplers and the rather long transmission lines of up to 100m to the push-buttons or switches (typical signal propagation in a copper conductor is around 5ns/m).
 
 <img src="example/esp32-pcf8574 circuit-v2c.jpg" alt="Example Circuit">
+
+### Rationale / Use-Case
+
+I created this component as part of introducing Home Assistant (HA) into my home.
+
+The original electrical installation uses impulse relays (teleruptors) controlled by push-buttons throughout the house. That implies a lot of wires carrying AC24V between the teleruptors and their corresponding push-buttons. Its a lot of wiring!
+
+I could replace the push-buttons with smart switches communicating with HA over Wi-Fi. The above component, however, allows me to reuse the existing wires and - by using I/O expanders - only use two GPIO pins on the ESP32.
+
+Along the way, I thought it would also be nice to have the option of converting certain push-buttons into toggle switches. That idea eventually led me to the solution presented above.
+
+I hope someone else may find this useful too ;-)
