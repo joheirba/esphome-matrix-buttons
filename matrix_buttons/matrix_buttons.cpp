@@ -1,7 +1,5 @@
 #include "esphome/core/log.h"
 #include "esphome/core/application.h"
-#pragma GCC diagnostic warning "-Wconversion"
-#pragma GCC diagnostic warning "-Wsign-conversion"
 #include "matrix_buttons.h"
 
 namespace esphome {
@@ -14,8 +12,6 @@ constexpr gpio::Flags operator~(gpio::Flags arg) {
 }
 
 void MatrixButtons::setup() {
-  //freq_mhz_ = esp_get_cpu_freq_hz() / 1000000 ;
-
   num_rows_ = this->rows_.size();
   num_cols_ = this->columns_.size();
   max_pos_ = num_rows_ * num_cols_;
@@ -38,11 +34,9 @@ void MatrixButtons::setup() {
   }
   for (auto *pin : this->columns_) {
     // set columns as input, but keep other flags as defined by user (notably the inverted flag !)
-    pin->pin_mode(pin->get_flags() | gpio::FLAG_INPUT & ~gpio::FLAG_OUTPUT);
+    pin->pin_mode((pin->get_flags() | gpio::FLAG_INPUT) & ~gpio::FLAG_OUTPUT);
     pin->setup();
   }
-
-  // todo: safety check before activating any rows (avoid burned chips)
 
   // initialize button states (avoid generating triggers for buttons that are still pressed)
   uint pos=0;
@@ -89,7 +83,7 @@ void MatrixButtons::loop() {
     int num=0;
     for (auto *col : this->columns_) {
       if (col->digital_read() == active_) {
-        ESP_LOGD(TAG, "Loop %d: all rows should be inactive but column %d is active", cnt_loops_, num);
+        ESP_LOGD(TAG, "Loop %ld: all rows should be inactive but column %d is active", cnt_loops_, num);
         disabled_at_ = now ; // disable loop for 1s to avoid scanning in unstable situations with multiple keys pressed and no diodes
         return; // wait for stable situation before scanning
       }
@@ -103,7 +97,7 @@ void MatrixButtons::loop() {
       uint32_t loop_interval = loop_now - last_loop_time_;
       if (loop_interval > max_loop_interval_){
         max_loop_interval_ = loop_interval;
-        ESP_LOGD(TAG, "Loop %d: interval max/avg: %d/%d ms, scan duration max: %d ms", 
+        ESP_LOGD(TAG, "Loop %ld: interval max/avg: %ld/%ld ms, scan duration max: %ld ms", 
           cnt_loops_, max_loop_interval_, (cnt_loops_ > 1) ? (last_loop_time_ - first_loop_time_) / (cnt_loops_  - 1) : 0, max_scan_duration_);
       }
       last_loop_time_ = loop_now;
@@ -178,7 +172,7 @@ void MatrixButtons::loop() {
   if (scan_duration > max_scan_duration_){
     max_scan_duration_ = scan_duration;
     if (cnt_loops_ > 10) {
-      ESP_LOGD(TAG, "Scan duration avg/max: %d/%d ms, loop interval cnt/max/avg: %d/%d/%d ms",
+      ESP_LOGD(TAG, "Scan duration avg/max: %ld/%ld ms, loop interval cnt/max/avg: %ld/%ld/%ld ms",
                sum_scan_duration_ / cnt_loops_, max_scan_duration_, cnt_loops_, max_loop_interval_,
                (last_loop_time_ - first_loop_time_) / (cnt_loops_ -1) );
     }
@@ -274,15 +268,8 @@ void MatrixButtons::dump_config() {
 
   #ifdef _DEBUG_MATRIX_BUTTONS
     ESP_LOGCONFIG(TAG, " pressed_keys_: %d", pressed_keys_);
-    // for (uint i = 0; i < active_start_.size(); i++) {
-    //   uint32_t start = active_start_[i];
-    //   uint rownbr = i / this->columns_.size();
-    //   uint colnbr = i % this->columns_.size();
-    //   if (start == 2) continue; // skip inactive keys
-    //   ESP_LOGCONFIG(TAG, " Key at row %d, col %d status %d", rownbr, colnbr, start);
-    // }
     if (cnt_loops_ > 1) {
-      ESP_LOGCONFIG(TAG, "Scan duration avg/max: %d/%d ms, loop interval cnt/max/avg: %d/%d/%d ms", 
+      ESP_LOGCONFIG(TAG, "Scan duration avg/max: %ld/%ld ms, loop interval cnt/max/avg: %ld/%ld/%ld ms", 
         sum_scan_duration_ / cnt_loops_, max_scan_duration_, cnt_loops_, max_loop_interval_, (last_loop_time_ - first_loop_time_) / (cnt_loops_ - 1) );
     }
 
@@ -303,77 +290,3 @@ void MatrixButtons::register_state_trigger(MatrixStateTrigger *trig) { this->sta
 
 }  // namespace matrix_buttons
 }  // namespace esphome
-
-      // switch (active_start_[pos]) {
-      //   case 2: // key is currently released and processed
-      //     if (state) {
-      //         // key was released and now is pressed => start debouncing timer
-      //         ESP_LOGD(TAG, "key @ pos %d press detected (start=%d)", pos, +now);
-      //         if (multi_keys_ > 0 && pressed_keys_ >= multi_keys_ ) {
-      //           // if the maximum allowed keys are already pressed, we can't know which one is real, so we wait
-      //           // till the situation becomes stable again to avoid sending wrong key events
-      //           ESP_LOGD(TAG, "Maximum %d of %d keys pressed, waiting to stabilize.", pressed_keys_, multi_keys_);
-      //         } else {
-      //           active_start_[pos] = static_cast<stime_t>(now | stime_t{1}); // make an odd timestamp
-      //           pressed_keys_ ++;
-      //         }
-      //       // }
-      //     }
-      //     break;
-      //   case 3: // key is currently pressed and processed
-      //     if (! state) {
-      //       // key was pressed and now is released => start debouncing timer
-      //       ESP_LOGD(TAG, "key @ pos %d release detected (start=%d)", pos, +now);
-      //       active_start_[pos] = static_cast<stime_t>(now & ~stime_t{1}); // make an even timestamp
-      //       if (pressed_keys_ > 0) pressed_keys_--;
-      //     }
-      //     break;
-      //   case 0: // key release still needs to be processed
-      //     if (max_pos_ == current_pos_) {
-      //       // we detect the actual number of pressed keys on the first scan
-      //       active_start_[pos] = ((int) state) + 2;
-      //       if (state) 
-      //         pressed_keys_++;
-      //         ESP_LOGD(TAG, "key @ pos %d pressed at start (start=%d)", pos, +now);
-      //     } else {
-      //       if (state) {
-      //         // key has been pressed before we processed the release => silently mark as pressed again
-      //         ESP_LOGD(TAG, "key @ pos %d pressed before processing (start=%d)", pos, +now);
-      //         active_start_[pos] = 1;
-      //         pressed_keys_++;
-      //         if (unprocessed_keys_ > 0) 
-      //           unprocessed_keys_--;
-      //       }
-      //     }
-      //     break;
-      //   case 1: // key press still needs to be processed
-      //     if (! state) {
-      //       // key has been released before we processed the press => mark as released again
-      //       ESP_LOGD(TAG, "key @ pos %d released before processing (start=%d)", pos, +now);
-      //       active_start_[pos] = 0;
-      //       if (pressed_keys_ > 0) 
-      //         pressed_keys_--;
-      //       if (unprocessed_keys_ > 0) 
-      //         unprocessed_keys_--;
-      //     }
-      //     break;
-      //   default: // key is currently debouncing
-      //     bool oldstate = (bool) (active_start_[pos] & 1);
-      //     if (state != oldstate) {
-      //       // state changed during debounce time => silently debounce
-      //       active_start_[pos] = (int) state | 2;
-      //       pressed_keys_+= state ? 1 : -1;
-      //       if (pressed_keys_ < 0) pressed_keys_ = 0 ;
-              
-      //       ESP_LOGD(TAG, "key @ pos %d bounced %s (start=%d, bounce=%d)", 
-      //         pos, oldstate ? "pressed" : "released", +now, static_cast<int>(now - active_start_[pos]));
-      //     } else if (now - active_start_[pos] >= debounce_time_) {
-      //       // debounce time has passed with stable state => mark key press/release to be handled below
-      //       active_start_[pos] = (int) state ; // mark as press (1) or release (0) to be processed below
-      //       unprocessed_keys_++;
-
-      //       ESP_LOGD(TAG, "key @ pos %d debounced as %s (start=%d, debounce=%d, action=%d, unprocessed=%d)", 
-      //         pos, state ? "pressed" : "released", +now, static_cast<int>(now - active_start_[pos]), active_start_[pos], unprocessed_keys_);
-      //     }
-      //     break;
-      // } /* switch active_start_[pos] */
