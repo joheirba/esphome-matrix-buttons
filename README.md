@@ -9,7 +9,7 @@ To install, download and copy the matrix_buttons directory into your esphome pro
   - Works with io-extenders like PCF8574 or MCP23017.
   - Allows to specify a scan_delay in microseconds to wait between activating a row and reading back the column states (needed for extenders or optocouplers, amongst others, to propagate the activation).
   - Allows to specify a script-id for asynchronuous handling of state changes.
-  - Allows detection of multiple activated buttons or switches (when every button and switch has a diode).
+  - Allows detection of multiple activated buttons or switches (every button and switch needs a diode or similar to avoid ghosting).
   - Handling of fast consecutive state changes: triple or more state changes are silently collapsed into one or two state changes.
 
 ## Component/Hub
