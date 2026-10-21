@@ -91,13 +91,13 @@ script:
   - multi_keys (Optional, int): Set to the number of simultaneous key presses to allow (if hardware supports it), otherwise only one key press will be allowed at a time. Defaults to 1.
   - script_id (Optional, ID): ID of a script that will be called on every state change of a button.
 
-### Example circuit
+## Example circuit
 
 Following example circuit has been used with the yaml above. The diode in series with every button allows the matrix to detect multiple button activations, which in turn allows the use of both toggle and momentary switches. The row pins are protected by optocouplers, allowing the "passive_rows" property to be safely set to false. As a PC817 optocoupler may induce a delay up to 18µs, a scan delay of 60µs is needed after activation of a row for the signal to propagate throug the i2c bus, the optocouplers and the rather long transmission lines of up to 100m to the push-buttons or switches (typical signal propagation in a copper conductor is around 5ns/m).
 
 <img src="example/esp32-pcf8574 circuit-v2c.jpg" alt="Example Circuit">
 
-### Rationale / Use-Case
+## Rationale / Use-Case
 
 I created this component as part of introducing Home Assistant (HA) into my home.
 
@@ -108,3 +108,15 @@ I could replace the push-buttons with smart switches communicating with HA over 
 Along the way, I thought it would also be nice to have the option of converting certain push-buttons into toggle switches. That idea eventually led me to the solution presented above.
 
 I hope someone else may find this useful too ;-)
+
+## Disclaimer
+
+This code is experimental and has not been thoroughly tested. It is provided as is, without any warranty or liability, as stated in the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPLv3 LICENCE.txt</a>.
+
+This warning is particularly important when using microcontrollers, such as the ESP32, to control electrical installations. Experimental hardware and software can behave unpredictably and may pose serious safety risks.
+
+You are responsible for taking all necessary safety precautions when developing, testing, installing, or using experimental electrical projects. These include following established electrical safety practices, applying all legally required safety measures, and ensuring that the work is carried out by a suitably qualified person where required.
+
+**Failure to take appropriate precautions may result in personal injury, fire, or property damage.**
+
+Use this code and any associated hardware entirely at your own risk.
