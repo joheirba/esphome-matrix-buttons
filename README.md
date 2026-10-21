@@ -22,6 +22,11 @@ To install, download and copy the matrix_buttons directory into the "my_componen
 #   GND      <- optoled <- 1kR <-----------------------------|
 #   pcf-col  <- opto-transistor <- gnd
 
+external_components:
+  - source:
+      type: local
+      path: my_components
+
 i2c:
   - id: i2c_exp
     sda: GPIO09
