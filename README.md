@@ -122,6 +122,4 @@ This warning is particularly important when using microcontrollers, such as the 
 
 You are responsible for taking all necessary safety precautions when developing, testing, installing, or using experimental electrical projects. These include following established electrical safety practices, applying all legally required safety measures, and ensuring that the work is carried out by a suitably qualified person where required.
 
-**Failure to take appropriate precautions may result in personal injury, fire, or property damage.**
-
 Use this code and any associated hardware entirely at your own risk.
