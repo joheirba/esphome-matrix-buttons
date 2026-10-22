@@ -56,11 +56,11 @@ class MatrixButtons : public key_provider::KeyProvider, public Component {
   uint scan_delay_{0};
 
   // state
-  using stime_t = uint8_t;    // 8 bits should be enough for debouncing, and it reduces the vector size
-  std::vector<stime_t> button_start_;
-  std::vector<bool>    button_state_;
-  std::vector<bool>    button_chnge_;
-  std::vector<bool>    button_newst_;
+  using stime_t = uint8_t;              // 8 bits should be enough for debouncing, and it reduces the vector size
+  std::vector<stime_t> button_start_;   // time when the button state changed (for debouncing)
+  std::vector<bool>    button_state_;   // current state of the button (pressed or released)
+  std::vector<bool>    button_chnge_;   // true if the button state has changed and needs to be processed
+  std::vector<bool>    button_newst_;   // requested new state of the button (pressed or released)
   uint num_cols_{0};
   uint num_rows_{0};
   uint current_pos_{0};
@@ -84,55 +84,6 @@ class MatrixButtons : public key_provider::KeyProvider, public Component {
     stime_t disabled_at_{0};
   #endif // _DEBUG_MATRIX_BUTTONS
 };
-
-  /* Alternative:
-  struct button_state_t {
-    stime_t sstime : 7; // double scaled time to 7 bits
-    bool pressed : 1;
-    stime_t get_time() const { return static_cast<stime_t>(sstime << 1); }
-    void set_time(uint8_t now) { sstime = static_cast<stime_t>(now >> 1); }
-    }
-  };
-  union packed_state_t {
-    stime_t stime; // scaled time to 8 bits
-    ButtonState bits;
-  };
-  std::vector<PackedState> button_state_{0};
-
-  button_state[pos].bits.pressed = state ;
-  button_state[pos].stime = now;
-  if (now - button_state[pos].bits.get_time() > debouce_time_) ...
-  ...
-*/
-/* Alternative 2 :
-  std::vector<bool> button_state_, button_change_ ;
-  pressed_keys_ == std::count(burron_state_.begin(), button_state_.end()) ;
-  auto it = std::find(button_changed_.begin(), button_changed_.end(), true);
-  while (it != button_changed_.end()){
-    pos=std::distance(button_changed_.begin, it);
-
-    *it = false;
-    it=std::find(std::next(it), button_changed_.end(), true);
-  }
-
-  slightly faster:
-  // Cache the size, as it doesn't change after setup
-  const size_t n = button_changed_.size(); 
-
-  for (size_t i = 0; i < n; ++i) {
-      if (button_changed_[i]) {
-          // Handle change...
-      }
-  }
-
-  Since you're scanning 144 buttons, are you using yield() or delay(0) inside your loop to ensure the ESP32's background tasks (like Wi-Fi) don't get starved?
-
-  if (this->my_modbus_script->is_running()) {
-    return; // Don't fire the next button yet; wait for the current Modbus task to finish
-}
-*/
-  
-
 
 }  // namespace matrix_buttons
 }  // namespace esphome
