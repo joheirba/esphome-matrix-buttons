@@ -1,6 +1,6 @@
 # ESPHome Matrix-buttons custom component
 
-**Custom ESPHome component for binary buttons arranged in a matrix configuration using multiplexers. Derived from matrix_keypad. Can be used for push-buttons or toggle-buttons if every button is protected with diode (see example circuit).**
+**Custom ESPHome component for binary buttons arranged in a matrix configuration using multiplexers. Derived from matrix_keypad. Can be used for push-buttons or toggle-buttons if every button is protected with a diode (see example circuit).**
 
 To install, download and copy the matrix_buttons directory into the "my_components" subdirectory of your esphome project directory.
 
